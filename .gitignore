@@ -1,0 +1,35 @@
+# Gradle / Android
+*.iml
+.gradle/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# IDE / Editor
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local configuration (do NOT commit API keys)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Local state / runtime data
+state.json
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*.orig
