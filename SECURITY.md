@@ -8,7 +8,7 @@ Do not publish exploit details publicly before coordination.
 
 ## Location Data Warning
 
-ZmanimforOllee uses your GPS location to compute zmanim and requests it directly from the
+Zmanim for Ollee uses your GPS location to compute zmanim and requests it directly from the
 Hebcal API. Location is sent only to Hebcal for time calculation — it is not stored,
 logged, or transmitted anywhere else.
 

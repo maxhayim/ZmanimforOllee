@@ -1,6 +1,6 @@
-# Contributing to ZmanimforOllee
+# Contributing to Zmanim for Ollee
 
-Thank you for your interest in contributing to ZmanimforOllee! We welcome contributions from the community and want to make the process clear and straightforward.
+Thank you for your interest in contributing to Zmanim for Ollee! We welcome contributions from the community and want to make the process clear and straightforward.
 
 ## Ways to Contribute
 

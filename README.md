@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.png" alt="ZmanimforOllee Logo" width="200"/>
+  <img src="docs/assets/logo.png" alt="Zmanim for Ollee Logo" width="200"/>
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@ No scraping, no shared credentials.
 - Gives candle lighting / Havdalah a distinct, more urgent chime — the one reminder you can't
   just check your phone for once Shabbat starts.
 
-ZmanimforOllee focuses purely on **zmanim computation, scheduling, and nameplate/alarm formatting**.
+Zmanim for Ollee focuses purely on **zmanim computation, scheduling, and nameplate/alarm formatting**.
 It does not implement its own BLE stack from scratch — it reuses (or forks) the protocol
 implementation already proven out by Super FreeOllee.
 
