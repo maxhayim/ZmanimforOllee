@@ -43,6 +43,30 @@ implementation already proven out by Super FreeOllee.
 
 ---
 
+## Screenshots
+
+### App Screenshots
+
+_Coming soon — no app build yet (see Status below)._
+
+<!--
+| Home | Settings |
+|:---:|:---:|
+| <img src="docs/assets/screenshots/app/home.png" width="220" alt="App home screen"> | <img src="docs/assets/screenshots/app/settings.png" width="220" alt="App settings screen"> |
+-->
+
+### Watch Screenshots
+
+_Coming soon — no app build yet (see Status below)._
+
+<!--
+| Nameplate | Alarm |
+|:---:|:---:|
+| <img src="docs/assets/screenshots/watch/nameplate.png" width="220" alt="Watch nameplate cycling next zman"> | <img src="docs/assets/screenshots/watch/alarm.png" width="220" alt="Watch alarm face"> |
+-->
+
+---
+
 ## Status
 
 🚧 Early WIP — repo scaffolding only so far. Architecture decision pending:
