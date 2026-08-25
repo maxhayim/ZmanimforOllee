@@ -12,9 +12,9 @@
   <img src="https://img.shields.io/badge/status-early%20WIP-orange" alt="Status">
 </p>
 
-# 🕯️ ZmanimforOllee
+# 🕯️ Zmanim for Ollee
 
-**ZmanimforOllee** pushes halachic times (zmanim) to an [**Ollee Watch**](https://www.olleewatch.com/) — candle lighting, Havdalah, and daily tefillah times — as a wrist complication, using the reverse-engineered Ollee BLE protocol.
+**Zmanim for Ollee** pushes halachic times (zmanim) to an [**Ollee Watch**](https://www.olleewatch.com/) — candle lighting, Havdalah, and daily tefillah times — as a wrist complication, using the reverse-engineered Ollee BLE protocol.
 
 No official Ollee SDK exists yet. This project builds on the community protocol work from
 [FreeOllee](https://github.com/Arthur86000/FreeOllee) (Arthur86000) and
