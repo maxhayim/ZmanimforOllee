@@ -54,12 +54,15 @@ The Ollee Watch is a **7-segment LCD, not pixels**. Per Forge's `docs/concepts/d
 - `Ollee.drawDay(text)` — 2 characters, the day digits (positions 2–3); the first of these two
   positions doesn't have all seven segments, so only digits `1`–`3` render reliably there.
 - Both keep the first N characters and right-align by left-padding with spaces.
-- Digits render reliably; letters are hit-or-miss on a 7-segment display (no official glyph
-  table fetched yet — check the emulator's "Character set" panel before assuming a specific
-  letter renders as expected).
+- Digits render reliably; letters are hit-or-miss on a 7-segment display. Confirmed in the
+  emulator (see README's "Watch Screenshots"): `'zman  '` (the fallback text in
+  `watchface/zmanim.js`) is genuinely hard to read, while `BleMessage`'s time strings
+  (`4:12P`) are clear. The emulator also doesn't render a colon glyph at all - `"4:12P"` shows
+  as `"4  12P"` with a gap, not a visible `:` - so don't count on punctuation rendering either.
 - **Conclusion: the phone app should pre-format display text**, favoring digits/time strings
   (`4:12P`) over letter abbreviations (`MINCHA`) wherever possible, since the watch does no
-  formatting of its own and can't be relied on to render arbitrary letters well.
+  formatting of its own and can't be relied on to render arbitrary letters well. This is what
+  `BleMessage.kt` already does.
 
 ## Feedback: no alarm/bell access
 
