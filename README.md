@@ -68,13 +68,18 @@ _Coming soon — no app build yet (see Status below)._
 
 ### Watch Screenshots
 
-_Coming soon — no app build yet (see Status below)._
+From the [Forge emulator](https://github.com/olleewatch/forge_emulator) (Beta 1 is
+emulator-only — no real watch to screenshot yet):
 
-<!--
-| Nameplate | Alarm |
-|:---:|:---:|
-| <img src="docs/assets/screenshots/watch/nameplate.png" width="220" alt="Watch nameplate cycling next zman"> | <img src="docs/assets/screenshots/watch/alarm.png" width="220" alt="Watch alarm face"> |
--->
+| Idle (no message received) | Routine update | Urgent alert |
+|:---:|:---:|:---:|
+| <img src="docs/assets/screenshots/watch/idle.png" width="220" alt="Watch showing the idle 'zman' fallback text, illustrating why letters are a bad idea on this display"> | <img src="docs/assets/screenshots/watch/routine-update.png" width="220" alt="Watch showing a routine zman time update, 4 12P"> | <img src="docs/assets/screenshots/watch/urgent-alert.png" width="220" alt="Watch showing an urgent candle-lighting alert with the LAP indicator lit"> |
+
+The idle screenshot is a good illustration of design-notes.md's "prefer digits over letters"
+point: the fallback text `'zman  '` is genuinely hard to read on the 7-segment display, while
+the time-formatted updates (routine and urgent) are clear. The urgent screenshot also shows the
+`LAP` indicator lighting up and the emulator's speaker icon, both driven by
+`watchface/zmanim.js`'s beep-chain.
 
 ---
 
