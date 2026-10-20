@@ -47,8 +47,10 @@ No scraping, no shared credentials.
 
 Two pieces, split the way Forge intends: the **watchface** (`watchface/zmanim.js`) is a thin,
 dumb display — it has no network access and does no zmanim math of its own, by design (Forge
-scripts can't reach the network). The **phone app** (not yet built) does all the Hebcal
-computation and scheduling, and just writes short strings to the watch.
+scripts can't reach the network). The **phone app** (`app/`, Android/Kotlin) does all the Hebcal
+computation and scheduling, and just writes short strings to the watch. It runs as a foreground
+service: it finds the already-paired Ollee watch, connects over BLE, polls Hebcal every 5
+minutes, and writes a message only when the next zman actually changes.
 
 ---
 
@@ -82,8 +84,13 @@ _Coming soon — no app build yet (see Status below)._
 
 - [x] Forge watchface script (`watchface/zmanim.js`) — receives text + an urgent flag over BLE,
       displays it, chimes. Runs today in the [Forge emulator](https://github.com/olleewatch/forge_emulator).
-- [ ] Phone app: Hebcal polling, next-zman scheduling, Shabbat/Yom Tov mode, BLE writes to the watch.
-- [ ] On-watch deployment — blocked on Forge **Beta 2** (Beta 1 is emulator-only).
+- [x] Phone app (`app/`) — Hebcal polling, next-zman scheduling, Shabbat/Yom Tov freeze mode, BLE
+      writes to the watch over Forge's GATT service. Builds and unit tests pass
+      (`./gradlew assembleDebug test`); not yet run against real hardware.
+- [ ] On-watch deployment — blocked on Forge **Beta 2** (Beta 1 is emulator-only), so the phone
+      app has nothing to actually connect to yet.
+- [ ] Multiple halachic opinions (currently GRA only), manual settings UI for location/candle
+      minutes (currently SharedPreferences only, no screen for them yet).
 
 Design notes so far live in [`docs/design-notes.md`](docs/design-notes.md).
 
@@ -111,15 +118,33 @@ rather than relying on the watch to do any formatting.
 
 ---
 
-## Configuration (planned)
+## Phone app
 
-- `location` — lat/lon, reused from the phone's `LocationManager` (no Google Play Services
-  dependency, same as Super FreeOllee's GrapheneOS-friendly location handling).
-- `calc_method` — which halachic opinion to use for zman calculation (GRA / Magen Avraham /
-  Baal HaTanya — all returned by the Hebcal API in a single response).
-- `candle_lighting_minutes` — minutes before sunset for candle lighting (Hebcal `b=` param,
-  default 18).
-- `havdalah_mode` — fixed-minutes after sundown vs. nightfall (Hebcal `m=` / `M=on`).
+`app/` is a plain Android/Kotlin app (no third-party dependencies — platform BLE, location,
+and HTTP APIs, `org.json` for parsing). `ZmanimForegroundService` does the real work:
+
+1. Finds the already-paired Ollee watch (by name, among bonded Bluetooth devices — pairing
+   itself still happens in Android's Bluetooth settings) and holds a BLE GATT connection to it.
+2. Every 5 minutes, fetches today's zmanim and any Shabbat/Yom Tov candle-lighting/Havdalah
+   windows from Hebcal, and figures out the next one up (`ZmanSchedule`, pure logic, unit tested).
+3. Writes a message to the watch only when that next zman actually changes — not every poll.
+4. On crossing into a Shabbat/Yom Tov window, sends one urgent message and then **freezes**
+   (no more Hebcal polling, no more BLE writes) until Havdalah — see design-notes.md's
+   "Shabbat / Yom Tov mode".
+
+Build it with `./gradlew assembleDebug`, run tests with `./gradlew test`.
+
+### Configuration
+
+Currently via `SharedPreferences` only (`Prefs.kt`) — no settings screen yet:
+
+- **Location** — a manual lat/lon override if set, otherwise the platform `LocationManager`'s
+  last known fix (no Google Play Services dependency, same as Super FreeOllee's
+  GrapheneOS-friendly approach). Hebcal needs `latitude`/`longitude` (not `lat`/`lon`) and a
+  `tzid` — the app sends the device's current timezone.
+- **Candle-lighting minutes** — minutes before sunset, default 18 (Hebcal's `b=` param).
+- Halachic opinion is currently fixed to GRA; MGA/Baal HaTanya (which Hebcal returns in the
+  same response) are a documented open question in design-notes.md, not yet exposed.
 
 ---
 

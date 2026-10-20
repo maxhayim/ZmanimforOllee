@@ -5,6 +5,10 @@ Captured from initial planning discussion. Updated now that an official SDK —
 original plan to fork Super FreeOllee / build against the reverse-engineered BLE protocol
 directly; see "Superseded: pre-Forge plan" at the bottom for that history.
 
+A first implementation of both pieces (`watchface/zmanim.js` and the `app/` phone app) now
+exists; see the README's "Watchface" and "Phone app" sections for what's actually built. The
+notes below are the design reasoning behind it.
+
 ## Architecture (current)
 
 Two pieces:
@@ -13,8 +17,10 @@ Two pieces:
   [Forge emulator](https://github.com/olleewatch/forge_emulator) for now — see "Forge SDK status"
   below). It has no network access and does no zmanim math; it just displays text it receives
   over BLE and chimes.
-- **Phone app** (not yet built) — does the Hebcal polling, next-zman scheduling, Shabbat/Yom Tov
-  mode, and writes short text messages to the watch's Forge BLE service.
+- **Phone app** (`app/`, Android/Kotlin, no third-party dependencies) — does the Hebcal polling,
+  next-zman scheduling, Shabbat/Yom Tov mode, and writes short text messages to the watch's
+  Forge BLE service. `ZmanimForegroundService` owns the loop; `ZmanSchedule` is the pure
+  next-zman/currently-in-a-window logic (unit tested, no Android dependency).
 
 This is a real simplification over the old plan: Forge's BLE channel is a documented, standard
 BLE GATT service, not a reverse-engineered Nordic UART protocol. The phone app no longer needs
@@ -92,18 +98,41 @@ This mirrors how Shabbat clocks/timers already work (all deciding happens before
 triggered live during) rather than introducing a new category of live wireless use during
 Shabbat.
 
+## Hebcal API gotcha
+
+Both endpoints need `latitude`/`longitude` (not `lat`/`lon` — Hebcal's own docs page doesn't
+spell this out, confirmed against the live API) and a `tzid`. The app sends
+`ZoneId.systemDefault().id` for `tzid` — fine as long as the phone's timezone matches where the
+watch actually is, which won't hold for a traveler crossing timezones, but is a reasonable
+default for now.
+
+## Resolved (were open questions)
+
+- **Phone app platform**: Android/Kotlin, no third-party dependencies (plain BLE/location/HTTP
+  platform APIs, `org.json` for parsing) — matches the house style of other maxhayim Android
+  projects (e.g. ShackScreen).
+- **Candle-lighting lead time**: no special threshold. The app always just shows "whatever's
+  next" (`ZmanSchedule.nextUpcoming`), so candle lighting naturally starts appearing once it
+  becomes the soonest upcoming time — no separate "30–60 minutes before" logic needed.
+- **Poll interval**: 5 minutes, re-checked against `OffsetDateTime.now()` each time (not a fixed
+  wall-clock schedule) via a self-rescheduling `Handler.postDelayed` loop — no coroutines
+  dependency.
+
 ## Open questions
 
-- Phone app platform: no longer tied to Android/Kotlin by necessity (Forge's BLE service is
-  standard GATT, not Android-specific) — still probably Android/Kotlin for practicality, but
-  worth a deliberate choice rather than an inherited one.
-- Support multiple halachic opinions (GRA / MGA / Baal HaTanya), or default to one and make it
-  configurable later?
-- How far in advance should the candle-lighting countdown start appearing on the display
-  (currently thinking last 30–60 minutes)?
+- Support multiple halachic opinions (GRA / MGA / Baal HaTanya, all in the same Hebcal zmanim
+  response) — currently hardcoded to GRA's fields; `HebcalClient.DAILY_ZMANIM` would need to
+  become configurable.
 - What should `Ollee.send()` (watch → phone) be used for, if anything — an ack? A "face is open"
   signal so the phone only pushes routine updates while someone's actually looking?
-- Timeline is gated on Forge Beta 2 for actual on-watch deployment; emulator-only until then.
+- No settings UI yet — location override and candle-lighting minutes are `SharedPreferences`
+  only (`Prefs.kt`), set by nothing (no screen writes them yet).
+- Timeline is gated on Forge Beta 2 for actual on-watch deployment; the phone app builds and
+  passes its unit tests but has never talked to a real watch, only the protocol docs.
+- If "today" rolls over to tomorrow with nothing left in `nextUpcoming` (e.g. late at night,
+  after tonight's last zman), the app doesn't fall back to fetching tomorrow's date until the
+  next poll naturally picks up the new `LocalDate` — a few hours with a stale display overnight,
+  not addressed yet.
 
 ## Superseded: pre-Forge plan (kept for history)
 

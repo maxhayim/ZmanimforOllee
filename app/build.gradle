@@ -1,0 +1,66 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.maxhayim.zmanimforollee'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.maxhayim.zmanimforollee'
+        // 26 = Android 8 (Oreo); BLE GATT central role and the foreground-service
+        // APIs this app relies on are solid from here on.
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+    }
+
+    // Release APKs must always carry the same key, or a downloaded update won't install over the
+    // old one. The key lives outside the repo; ZMANIMFOROLLEE_SIGNING points at its properties
+    // file. Without it (building from source) the debug key is used.
+    def signingFile = System.getenv('ZMANIMFOROLLEE_SIGNING')
+    signingConfigs {
+        if (signingFile && file(signingFile).exists()) {
+            release {
+                def p = new Properties()
+                file(signingFile).withInputStream { p.load(it) }
+                storeFile file(p.storeFile)
+                storePassword p.storePassword
+                keyAlias p.keyAlias
+                keyPassword p.keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.findByName('release') ?: signingConfigs.debug
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+// No third-party dependencies: plain Android views, org.json (built in), and the
+// platform BLE/location/HTTP APIs directly.
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    // Android's org.json is a stub on the JVM; unit tests need the real implementation.
+    testImplementation 'org.json:json:20231013'
+}
