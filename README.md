@@ -3,6 +3,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/olleewatch/forge_emulator">
+    <img src="https://img.shields.io/badge/Ollee%20Watch-Forge-blueviolet" alt="Ollee Watch Forge">
+  </a>
   <a href="https://kotlinlang.org/">
     <img src="https://img.shields.io/badge/Kotlin-Android-blue" alt="Kotlin">
   </a>
@@ -14,12 +17,16 @@
 
 # 🕯️ Zmanim for Ollee
 
-**Zmanim for Ollee** pushes halachic times (zmanim) to an [**Ollee Watch**](https://www.olleewatch.com/) — candle lighting, Havdalah, and daily tefillah times — as a wrist complication, using the reverse-engineered Ollee BLE protocol.
+**Zmanim for Ollee** pushes halachic times (zmanim) to an [**Ollee Watch**](https://www.olleewatch.com/) — candle lighting, Havdalah, and daily tefillah times — as a custom watchface, built on the official **[Ollee Watch Forge](https://github.com/olleewatch/forge_emulator)** SDK.
 
-No official Ollee SDK exists yet. This project builds on the community protocol work from
-[FreeOllee](https://github.com/Arthur86000/FreeOllee) (Arthur86000) and
-[FreeOllee-Faces / Super FreeOllee](https://github.com/kenblizzardcaron/FreeOllee-Faces) (kenblizzardcaron),
-which reverse-engineered the Nordic UART BLE frame format, CRC, and command set.
+Ollee Watch Forge lets you write custom watchfaces in plain JavaScript and talk to the
+watch over a documented BLE GATT service — no more reverse engineering required. (It's
+currently **Beta 1**: emulator support only, with on-watch deployment coming in Beta 2 —
+see [Status](#status).) Earlier design work in this repo leaned on the community protocol
+reverse-engineered by [FreeOllee](https://github.com/Arthur86000/FreeOllee) (Arthur86000) and
+[FreeOllee-Faces / Super FreeOllee](https://github.com/kenblizzardcaron/FreeOllee-Faces)
+(kenblizzardcaron); that effort is credited in Acknowledgments but is no longer the
+dependency now that an official SDK exists.
 
 Zmanim are computed from the [Hebcal](https://www.hebcal.com/) REST APIs.
 No scraping, no shared credentials.
@@ -30,16 +37,18 @@ No scraping, no shared credentials.
 
 - Pulls daily zmanim from the **Hebcal Zmanim API** (`hebcal.com/zmanim`) for your GPS location.
 - Pulls candle lighting / Havdalah times (weekly Shabbat **and** Yom Tov) from the **Hebcal Calendar API** (`hebcal.com/hebcal`).
-- Cycles the watch's 6-character nameplate between the next zman's name and its countdown/time
-  (e.g. `MINCHA` → `4:12P`), the same way Super FreeOllee cycles Activity-mode metrics.
-- Re-arms the watch's one-shot wall-clock alarm to whichever zman is next, so a single alarm
-  slot is enough to always be "pointed at" the next relevant time.
-- Gives candle lighting / Havdalah a distinct, more urgent chime — the one reminder you can't
-  just check your phone for once Shabbat starts.
+- A phone-side app computes the next zman and writes a short text message to the watch over
+  Forge's BLE GATT service; the [`watchface/zmanim.js`](watchface/zmanim.js) Forge face just
+  displays whatever it receives on the clock digits (`Ollee.drawMain`) and chimes.
+- Candle lighting / Havdalah messages are flagged **urgent** and get three beeps instead of
+  one — the one reminder you can't just check your phone for once Shabbat starts.
+- The watchface keeps listening for messages in the background (`Ollee.subscribe(E_BLE_RX)`),
+  so an urgent alert still buzzes your wrist even while another face is on screen.
 
-Zmanim for Ollee focuses purely on **zmanim computation, scheduling, and nameplate/alarm formatting**.
-It does not implement its own BLE stack from scratch — it reuses (or forks) the protocol
-implementation already proven out by Super FreeOllee.
+Two pieces, split the way Forge intends: the **watchface** (`watchface/zmanim.js`) is a thin,
+dumb display — it has no network access and does no zmanim math of its own, by design (Forge
+scripts can't reach the network). The **phone app** (not yet built) does all the Hebcal
+computation and scheduling, and just writes short strings to the watch.
 
 ---
 
@@ -69,12 +78,36 @@ _Coming soon — no app build yet (see Status below)._
 
 ## Status
 
-🚧 Early WIP — repo scaffolding only so far. Architecture decision pending:
+🚧 Early WIP.
 
-- [ ] Fork Super FreeOllee and add zmanim as a new complication type, **or**
-- [ ] Build a standalone app against the documented BLE protocol directly
+- [x] Forge watchface script (`watchface/zmanim.js`) — receives text + an urgent flag over BLE,
+      displays it, chimes. Runs today in the [Forge emulator](https://github.com/olleewatch/forge_emulator).
+- [ ] Phone app: Hebcal polling, next-zman scheduling, Shabbat/Yom Tov mode, BLE writes to the watch.
+- [ ] On-watch deployment — blocked on Forge **Beta 2** (Beta 1 is emulator-only).
 
 Design notes so far live in [`docs/design-notes.md`](docs/design-notes.md).
+
+---
+
+## Watchface
+
+[`watchface/zmanim.js`](watchface/zmanim.js) is a Forge watchface: a single self-contained
+JavaScript file, no phone-app code baked in. Test it by cloning
+[olleewatch/forge_emulator](https://github.com/olleewatch/forge_emulator), opening `index.html`,
+and using **Load file** to load `zmanim.js`.
+
+**BLE message protocol** (phone → watch, over Forge's BLE service
+`C6FB0001-A37D-40AC-89BE-887D25E1F5B3`, write to RX `C6FB0002-...`):
+
+- Byte 0: `'1'` for an urgent alert (candle lighting / Havdalah), `'0'` for a routine update.
+- Remaining bytes: text to show (`Ollee.drawMain` keeps the first 6 characters and
+  right-pads/truncates automatically).
+
+The watch display is a 7-segment LCD, not pixels — stick to characters that render cleanly on
+it (digits render reliably; letters are hit-or-miss, see
+[`docs/concepts/display.md`](https://github.com/olleewatch/forge_emulator/blob/main/docs/concepts/display.md)
+in the Forge repo). The phone app is expected to pre-format text (e.g. a time like `4:12P`)
+rather than relying on the watch to do any formatting.
 
 ---
 
@@ -106,6 +139,7 @@ Pull requests are welcome. Open an issue first to discuss ideas or report bugs �
 ## Acknowledgments
 
 * [Hebcal](https://www.hebcal.com/) — Jewish calendar and zmanim data
-* [FreeOllee](https://github.com/Arthur86000/FreeOllee) — original Ollee BLE protocol reverse engineering
+* [Ollee Watch Forge](https://github.com/olleewatch/forge_emulator) — the official watchface SDK this project is built on
+* [FreeOllee](https://github.com/Arthur86000/FreeOllee) — original Ollee BLE protocol reverse engineering (historical reference, no longer a dependency)
 * [FreeOllee-Faces / Super FreeOllee](https://github.com/kenblizzardcaron/FreeOllee-Faces) — full protocol
-  documentation and reference implementation
+  documentation and reference implementation (historical reference, no longer a dependency)
