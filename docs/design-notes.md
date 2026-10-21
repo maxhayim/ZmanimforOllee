@@ -121,6 +121,16 @@ default for now.
   wall-clock schedule) via a self-rescheduling `Handler.postDelayed` loop — no coroutines
   dependency.
 
+## Bug caught by real-device testing
+
+First run on a real phone (not just unit tests) surfaced a genuine crash: `onStatusChanged`
+(wired to `MainActivity.refresh()`, which touches `TextView`s) was being invoked directly from
+`ZmanimForegroundService`'s background `ZmanimPoll` thread and from the BLE callback thread,
+never the main thread. Android enforces UI touches from the main thread only, so this crashed
+immediately once the service actually sent a message. Unit tests never exercise `Service`
+lifecycle or threading, so this slipped through until real hardware. Fixed by routing
+`onStatusChanged` through a main-thread `Handler` in the service.
+
 ## Open questions
 
 - Support multiple halachic opinions (GRA / MGA / Baal HaTanya, all in the same Hebcal zmanim
