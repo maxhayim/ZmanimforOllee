@@ -58,13 +58,16 @@ minutes, and writes a message only when the next zman actually changes.
 
 ### App Screenshots
 
-_Coming soon — no app build yet (see Status below)._
+From the debug build running on a real Android phone (not paired with a watch yet):
 
-<!--
-| Home | Settings |
+| Stopped | Running |
 |:---:|:---:|
-| <img src="docs/assets/screenshots/app/home.png" width="220" alt="App home screen"> | <img src="docs/assets/screenshots/app/settings.png" width="220" alt="App settings screen"> |
--->
+| <img src="docs/assets/screenshots/app/home.png" width="220" alt="App showing the stopped state, with a Start button"> | <img src="docs/assets/screenshots/app/running.png" width="220" alt="App showing the running state, with a Stop button, after starting the foreground service"> |
+
+Starting the service here is what first caught a real threading bug: `ZmanimForegroundService`
+was calling back into `MainActivity`'s UI from its background poll thread instead of the main
+thread, which crashed on a real device immediately (never surfaced by unit tests alone). Fixed
+by posting that callback through a main-thread `Handler`.
 
 ### Watch Screenshots
 
@@ -91,7 +94,8 @@ the time-formatted updates (routine and urgent) are clear. The urgent screenshot
       displays it, chimes. Runs today in the [Forge emulator](https://github.com/olleewatch/forge_emulator).
 - [x] Phone app (`app/`) — Hebcal polling, next-zman scheduling, Shabbat/Yom Tov freeze mode, BLE
       writes to the watch over Forge's GATT service. Builds and unit tests pass
-      (`./gradlew assembleDebug test`); not yet run against real hardware.
+      (`./gradlew assembleDebug test`); now also run on a real Android phone (not yet against a
+      real watch, since that's gated on Forge Beta 2 — see below).
 - [ ] On-watch deployment — blocked on Forge **Beta 2** (Beta 1 is emulator-only), so the phone
       app has nothing to actually connect to yet.
 - [ ] Multiple halachic opinions (currently GRA only), manual settings UI for location/candle

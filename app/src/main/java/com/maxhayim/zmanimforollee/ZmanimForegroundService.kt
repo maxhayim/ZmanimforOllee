@@ -9,6 +9,7 @@ import android.os.Binder
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -28,8 +29,15 @@ class ZmanimForegroundService : Service() {
     private lateinit var bleClient: OlleeBleClient
     private lateinit var pollThread: HandlerThread
     private lateinit var pollHandler: Handler
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     var onStatusChanged: (() -> Unit)? = null
+
+    /** [onStatusChanged] drives UI (MainActivity.refresh), so it must run on the main thread -
+     *  callers here are the BLE callback thread and the ZmanimPoll HandlerThread, never main. */
+    private fun notifyStatusChanged() {
+        mainHandler.post { onStatusChanged?.invoke() }
+    }
 
     val connectionState: BleConnectionState get() = bleClient.state
     val lastMessage: String? get() = prefs.lastSentMessage
@@ -51,7 +59,7 @@ class ZmanimForegroundService : Service() {
         bleClient.listener = object : OlleeBleClient.Listener {
             override fun onStateChanged(state: BleConnectionState) {
                 updateNotification()
-                onStatusChanged?.invoke()
+                notifyStatusChanged()
                 if (state == BleConnectionState.DISCONNECTED) {
                     pollHandler.postDelayed({ connectToPairedWatchIfAny() }, RECONNECT_DELAY_MS)
                 }
@@ -156,7 +164,7 @@ class ZmanimForegroundService : Service() {
             Log.w(TAG, "BLE write failed (not connected?) for message: $message")
         }
         updateNotification()
-        onStatusChanged?.invoke()
+        notifyStatusChanged()
     }
 
     private fun createNotificationChannel() {
